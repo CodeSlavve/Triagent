@@ -1,7 +1,5 @@
-dvc
 pandas
 numpy
-sklearn
-matplotlib
-seaborn
-mlflow
+scikit-learn
+requests
+python-dotenv
