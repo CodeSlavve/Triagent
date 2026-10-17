@@ -151,11 +151,13 @@ activemq-data/
 .env
 .envrc
 .venv
+.triagent-venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+triagent-venv/
 
 # Spyder project settings
 .spyderproject
@@ -218,5 +220,4 @@ __marimo__/
 .streamlit/secrets.toml
 
 #data
-data/*.jsonl
-data/*.db
+data/
