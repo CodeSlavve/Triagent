@@ -10,15 +10,25 @@ Rate limit is: 1 API hit = 1 limit [now one can ask 100 or 200 issues in one pag
 
 - **Stretch repo**: facebook/react - far more issues and labels; would stress-test rate limits and duplicate detection. Not fetched.
 
-## 2026-10-17 — Fetched Repo Exploratiion and Switching
+## 2026-10-17 — Fetched Repo Exploration and Switching
 
 - Flask looked good (small, well documented) but was 87% unlabeled. I checked label coverage with the Postman before committing and switched to pytest.
 
-- Pytest had substantially more issues and well documented and labelled issue hence the switch
+- Pytest had substantially more issues and well documented and labelled issue hence the switch. (Correction, 2026-10-18: 77% of pytest issues have some label, but only 65% have a `type:` label, which is what the classifier actually needs.)
 
 - **Why I used it:** to download 6,421 pytest issues and their comments reliably, following the `next` link, sleeping when the limit is low, and checkpointing so a crash resumes instead of restarting.
 
 - **Trade-offs / what surprised me:** the issues endpoint also returns PRs, so they must be filtered. The repo-wide comments endpoint silently capped at 30,000 items, and I only caught it by comparing totals against the issues' comment counts.
+
+## 2026-10-18 — Cleaning GitHub issue data and building the label ground truth
+
+- **What it is:** Data cleaning turns raw issue text into something models can use: removing template boilerplate (Bitbucket migration header/footer, HTML comments), keeping code and tracebacks but marking them [CODE]/[TRACEBACK], and mapping GitHub labels to a small category set (bug / feature / docs / question / other).
+
+- **Why I did it this way:** I inspected the data before writing rules (label list, noise counts, random samples). Code blocks are swapped for placeholders before cleaning and restored afterwards, so no regex can damage code. Only `type:` labels define the category; plugin/topic/status labels describe something else. Issues with no type label get None and conflicting ones get "ambiguous", so I never invent ground truth. Every later metric (classifier accuracy, prompt comparison) is scored against these categories, so this mapping is the base of the project's evaluation.
+
+- **Trade-offs / what surprised me:** 35% of issues have no type label, so my earlier "77% labeled" figure was misleading. The class split is bug 37%, feature 28%, question 18%, other 10%, docs 8%, so a classifier that always says "bug" scores about 37%; that is the baseline to beat. Some label choices are judgement calls (proposal as feature, based on a 15-issue sample). A generic HTML-tag stripper would have deleted pytest output like `<Module test_x.py>`, so I only remove specific tags. A check that every raw code block survives cleaning found 1 failure in 6,421 issues. I also learned not to trust pasted terminal output for whitespace.
+
+- **Python concepts practiced:** set operations (`&`, `discard`), regex (non-greedy, `DOTALL`, `re.sub` with a function), writing assert tests for each rule, and the bug where `and` is not the same as `&`.
 
 ## Reminders
 - Create the sandbox repo (with realistic dummy issues) before Week 6 Day 6.
