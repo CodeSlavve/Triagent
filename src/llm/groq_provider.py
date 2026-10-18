@@ -1,11 +1,14 @@
 import os
+import time
 
 from groq import Groq
 
-from src.llm.base import LLMProvider
+from src.llm.base import LLMProvider, LLMResponse, normalize_finish_reason
 
 
 class GroqProvider(LLMProvider):
+    name = "groq"
+
     def __init__(self, model: str):
         api_key = os.getenv("GROQ_API_KEY")
 
@@ -20,8 +23,9 @@ class GroqProvider(LLMProvider):
         prompt: str,
         system_prompt: str = "You are a helpful assistant.",
         temperature: float = 0.3,
-        max_tokens: int = 500,
-    ) -> str:
+        max_tokens: int = 1500,
+    ) -> LLMResponse:
+        start = time.perf_counter()
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
@@ -31,6 +35,15 @@ class GroqProvider(LLMProvider):
             temperature=temperature,
             max_completion_tokens=max_tokens,
         )
+        latency = time.perf_counter() - start
 
-        content = response.choices[0].message.content
-        return content or ""
+        choice = response.choices[0]
+        return LLMResponse(
+            text=choice.message.content or "",
+            finish_reason=normalize_finish_reason(choice.finish_reason),
+            provider=self.name,
+            model=self.model,
+            prompt_tokens=response.usage.prompt_tokens,
+            completion_tokens=response.usage.completion_tokens,
+            latency_s=round(latency, 2),
+        )
