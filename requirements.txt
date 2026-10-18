@@ -3,3 +3,5 @@ numpy
 scikit-learn
 requests
 python-dotenv
+groq
+google-genai
