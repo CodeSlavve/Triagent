@@ -40,3 +40,8 @@
 - What happened: only 5 issues carry `closed as duplicate`.
 - Impact: not enough for the Week 3 Day 5 duplicate-detection test (15-20 known duplicates).
 - Action: mine comments for "duplicate of #N" phrasing in Week 3.
+
+## 2026-10-18 - Two docs files dominate the docs table
+- What happened: plugin_list.rst (1.4 MB) and changelog.rst (500 KB) are about 65% of the 2.9 MB of docs text (261 pages loaded).
+- Impact: if indexed as-is in Week 3, retrieval would return plugin lists and changelog lines instead of real guidance such as how-to/fixtures.rst.
+- Action: exclude both when chunking docs.

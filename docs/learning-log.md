@@ -30,5 +30,11 @@ Rate limit is: 1 API hit = 1 limit [now one can ask 100 or 200 issues in one pag
 
 - **Python concepts practiced:** set operations (`&`, `discard`), regex (non-greedy, `DOTALL`, `re.sub` with a function), writing assert tests for each rule, and the bug where `and` is not the same as `&`.
 
+## 2026-10-18 — SQLite storage for issues, comments, labels and docs
+
+- **What it is:** SQLite is a database stored in a single file. Tables are linked by keys: each comment stores the number of the issue it belongs to (a foreign key), and labels sit in their own table with one row per issue-label pair.
+- **Why I used it:** later stages (embeddings, RAG, tools) need queries like "all comments for issue X" or "all closed issues with label Y", which are one `SELECT` in SQLite but a full file scan in JSONL. The load runs in one transaction, and the row counts, orphan check, foreign key check and category counts all matched the Day 3 numbers, so I know the load is correct.
+- **Trade-offs / what surprised me:** SQLite ignores foreign keys unless `PRAGMA foreign_keys = ON` is set on each connection. Keys use the issue number alone, so a second repo later would need a `repo` column and a migration. I got the docs from one zip download instead of hundreds of API calls. Two docs files (plugin list, changelog) make up about 65% of the docs text and will need excluding from retrieval.
+
 ## Reminders
 - Create the sandbox repo (with realistic dummy issues) before Week 6 Day 6.
