@@ -41,13 +41,61 @@ def test_first_provider_good_second_never_called():
     assert b.calls == []
 
 
-def test_first_raises_second_answers():
-    a = FakeProvider("groq", [RuntimeError("429 rate limit")])
+def test_first_transient_error_retries_then_second_answers(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr("src.llm.fallback.time.sleep", sleeps.append)
+    a = FakeProvider("groq", [RuntimeError("429 rate limit")] * 3)
     b = FakeProvider("gemini", [good("gemini")])
     fb = FallbackProvider([a, b])
     r = fb.generate("hi")
     assert r.provider == "gemini"
     assert "429" in fb.last_failures[0][1]
+    assert len(a.calls) == 3
+    assert sleeps == [0.5, 1.0]
+
+
+def test_transient_error_can_recover_on_same_provider(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr("src.llm.fallback.time.sleep", sleeps.append)
+    a = FakeProvider("groq", [RuntimeError("temporary provider failure"), good("groq")])
+    b = FakeProvider("gemini", [good("gemini")])
+
+    response = FallbackProvider([a, b]).generate("hi")
+
+    assert response.provider == "groq"
+    assert a.calls == [1500, 1500]
+    assert b.calls == []
+    assert sleeps == [0.5]
+
+
+def test_retry_backoff_is_exponential_and_capped(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr("src.llm.fallback.time.sleep", sleeps.append)
+    provider = FakeProvider("groq", [RuntimeError("503 unavailable")] * 5)
+
+    with pytest.raises(AllProvidersFailedError):
+        FallbackProvider(
+            [provider],
+            max_retries=4,
+            retry_backoff_seconds=0.5,
+            max_retry_backoff_seconds=1.2,
+        ).generate("hi")
+
+    assert len(provider.calls) == 5
+    assert sleeps == [0.5, 1.0, 1.2, 1.2]
+
+
+def test_permanent_configuration_error_is_not_retried(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr("src.llm.fallback.time.sleep", sleeps.append)
+    a = FakeProvider("groq", [ValueError("invalid model configuration")])
+    b = FakeProvider("gemini", [good("gemini")])
+
+    response = FallbackProvider([a, b]).generate("hi")
+
+    assert response.provider == "gemini"
+    assert a.calls == [1500]
+    assert sleeps == []
 
 
 def test_first_returns_empty_second_answers():
