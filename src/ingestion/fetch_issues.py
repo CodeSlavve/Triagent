@@ -1,5 +1,3 @@
-
-import argparse
 import json
 import os
 import time
@@ -8,12 +6,7 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--repo", default="pytest-dev/pytest")
-parser.add_argument("--limit", type=int, default=None)
-args = parser.parse_args()
-
-REPO = args.repo
+REPO = "pytest-dev/pytest"
 
 # 1. Configuration
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -68,8 +61,7 @@ def load_checkpoint():
 
     # Build the initial URL with its query parameters included.
     request = requests.Request(
-        "GET",
-        API_URL,
+        url=API_URL,
         params=PARAMS,
     ).prepare()
 
@@ -86,20 +78,14 @@ def save_checkpoint(next_url):
     temp_file.replace(CHECKPOINT_FILE)
 
 
-def fetch_issues(limit):
+def fetch_issues():
     """Fetch issues and append new records until the target is reached."""
-    limit = limit if limit else float("inf")
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
     saved_numbers = load_saved_issues()
     saved_count = len(saved_numbers)
 
     print(f"Existing issues: {saved_count}")
-    print(f"Target dataset size: {limit}")
-
-    if saved_count >= limit:
-        print("Target already reached. Nothing to fetch.")
-        return
 
     next_url = load_checkpoint()
     new_count = 0
@@ -108,7 +94,7 @@ def fetch_issues(limit):
     # Append instead of deleting existing data.
     with OUTPUT_FILE.open("a", encoding="utf-8") as file:
         with requests.Session() as session:
-            while next_url and saved_count < limit:
+            while next_url:
                 current_url = next_url
 
                 response = session.get(
@@ -120,9 +106,6 @@ def fetch_issues(limit):
                 response.raise_for_status()
 
                 page_next_url = response.links.get("next", {}).get("url")
-
-                # The next URL already contains its query parameters.
-                params = None
 
                 items = response.json()
 
@@ -147,13 +130,6 @@ def fetch_issues(limit):
                     saved_count += 1
                     new_count += 1
 
-                # If we hit the target mid-page, revisit this page on resume.
-                # Existing issue numbers will be skipped.
-                if saved_count >= limit:
-                    save_checkpoint(current_url)
-                    next_url = current_url
-                    break
-
                 # The current page was processed completely.
                 next_url = page_next_url
                 save_checkpoint(next_url)
@@ -170,7 +146,7 @@ def fetch_issues(limit):
                 )
 
                 print(
-                    f"Total saved: {saved_count}/{limit} | "
+                    f"Total saved: {saved_count} | "
                     f"New this run: {new_count} | "
                     f"PRs skipped: {skipped_prs} | "
                     f"Rate limit remaining: {remaining}"
@@ -196,6 +172,4 @@ def fetch_issues(limit):
 
 
 if __name__ == "__main__":
-    if args.limit is not None and args.limit < 1:
-       parser.error("--limit must be at least 1")
-    fetch_issues(args.limit)
+    fetch_issues()
