@@ -13,15 +13,11 @@ def protect_code_blocks(text):
     blocks = []
 
     def stash(match):
-        # TODO 1: append the matched text to `blocks`
-        #         (hint: match.group(0) is the whole matched string)
+        # append the matched text to `blocks`
         blocks.append(match.group(0))
 
-        # TODO 2: return the placeholder for this block, e.g. "@@CODE0@@"
-        #         (hint: its number is its position in `blocks`)
+        # return the placeholder for this block, e.g. "@@CODE0@@"
         return f"@@CODE{len(blocks) - 1}@@"
-    
-        pass
 
     protected = CODE_FENCE.sub(stash, text)
     return protected, blocks
@@ -29,8 +25,7 @@ def protect_code_blocks(text):
 
 def restore_code_blocks(text, blocks):
     """Put each block back where its placeholder is."""
-    # TODO 3: loop over blocks with their index; replace "@@CODE{index}@@"
-    #         with the block text (hint: enumerate(blocks), str.replace)
+    # loop over blocks with their index; replace "@@CODE{index}@@" with the block text
     for index, block in enumerate(blocks):
         text = text.replace(f"@@CODE{index}@@", block)
     return text

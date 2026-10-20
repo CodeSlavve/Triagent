@@ -24,21 +24,21 @@ def category_from_labels(label_names):
     Returns "bug" / "feature" / "docs" / "question" / "other",
     None if there is no type label, or "ambiguous" if categories conflict.
     """
-    # TODO 1: normalize each name (strip whitespace, lowercase)
+    # normalize each name (strip whitespace, lowercase)
     cleaned = [name.strip().lower() for name in label_names]
 
-    # TODO 2: build a set of categories from names found in TYPE_TO_CATEGORY
+    # build a set of categories from names found in TYPE_TO_CATEGORY
     categories = set(TYPE_TO_CATEGORY[name] for name in cleaned if name in TYPE_TO_CATEGORY)
 
-    # TODO 3: empty set -> return None
+    # empty set -> return None
     if not categories:
         return None
 
-    # TODO 4: if the set contains a real category, remove "other"
+    # if the set contains a real category, remove "other"
     if categories & REAL_CATEGORIES:
         categories.discard("other")
 
-    # TODO 5: one category left -> return it; more than one -> "ambiguous"
+    # one category left -> return it; more than one -> "ambiguous"
     if len(categories) == 1:
         return next(iter(categories))
     return "ambiguous"
