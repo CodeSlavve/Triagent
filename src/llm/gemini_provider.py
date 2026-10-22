@@ -49,4 +49,3 @@ class GeminiProvider(LLMProvider):
             completion_tokens=getattr(usage, "candidates_token_count", None),
             latency_s=round(latency, 2),
         )
-        return response.text or ""
