@@ -154,7 +154,7 @@ For each new technology, follow this loop:
 
 **Learn:** structured outputs, prompt engineering patterns (instructions, constraints, few-shot, output formatting), prompt evaluation, hallucination reduction.
 
-- [ ] **Day 1 (Mon, 3-4 h)** — Define Pydantic `TriageResult` schema (category, priority, summary, suggested_action, confidence, reasoning). Write prompt **v1** and get valid JSON back.
+- [x] **Day 1 (Mon, 3-4 h)** — Define Pydantic `TriageResult` schema (category, priority, summary, suggested_action, confidence, reasoning). Write prompt **v1** and get valid JSON back.
 - [ ] **Day 2 (Tue, 3-4 h)** — Add validation + retry-on-invalid-JSON logic. Handle malformed output and refusals.
 - [ ] **Day 3 (Wed, 3-4 h)** — Build the **eval set**: hand-label 40-60 representative issues (category, priority, ideal action). Store in `eval/triage_eval.jsonl`.
 - [ ] **Day 4 (Thu, 3-4 h)** — Write the prompt eval script: run a prompt version over the eval set, report accuracy / schema-validity / latency per provider.
